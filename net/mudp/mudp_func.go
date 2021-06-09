@@ -23,12 +23,12 @@ func NewMulticastConn(address string) (*net.UDPConn, error) {
 	 * 但是，如果自己搜索网卡，有时候搜索不到，造成服务器无法启动，反而使用 nil 可以快速启动。
 	 * 如果后续出现问题，可以尝试下面自己搜索网卡的方式。
 	 */
-	host, _, err := getHostAndPortFromAddress(address)
-	if err != nil {
-		return nil, err
-	}
-	conn, err := net.ListenMulticastUDP("udp", findIfiForever(host), addr)
-	// conn, err := net.ListenMulticastUDP("udp", nil, addr)
+	// host, _, err := getHostAndPortFromAddress(address)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// conn, err := net.ListenMulticastUDP("udp", findIfiForever(host), addr)
+	conn, err := net.ListenMulticastUDP("udp", nil, addr)
 	if err != nil {
 		return nil, err
 	}

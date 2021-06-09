@@ -1,4 +1,4 @@
-package snmp
+package iswitch
 
 const (
 	// IfNumberOid [Get] 网络接口的数目

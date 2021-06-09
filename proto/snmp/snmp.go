@@ -74,7 +74,7 @@ func (s *SNMP) Walk(oid string) ([]*Var, error) {
 	}
 	var result []*Var
 	for _, pdu := range p {
-		result = append(result, New(pdu))
+		result = append(result, NewVar(pdu))
 	}
 	return result, nil
 }
@@ -90,7 +90,7 @@ func (s *SNMP) BulkWalk(oid string) ([]*Var, error) {
 	}
 	var result []*Var
 	for _, pdu := range p {
-		result = append(result, New(pdu))
+		result = append(result, NewVar(pdu))
 	}
 	return result, nil
 }
@@ -105,7 +105,7 @@ func getFirstResultFromPacket(packet *gosnmp.SnmpPacket) (*Var, error) {
 	if len(packet.Variables) == 0 {
 		return result, NoneErr
 	}
-	result = New(packet.Variables[0])
+	result = NewVar(packet.Variables[0])
 	return result, nil
 }
 
@@ -113,7 +113,7 @@ func getFirstResultFromPacket(packet *gosnmp.SnmpPacket) (*Var, error) {
 func getAllResultFromPacket(packet *gosnmp.SnmpPacket) ([]*Var, error) {
 	var result []*Var
 	for _, pdu := range packet.Variables {
-		result = append(result, New(pdu))
+		result = append(result, NewVar(pdu))
 	}
 	return result, nil
 }

@@ -11,7 +11,7 @@ type Var struct {
 	gosnmp.SnmpPDU
 }
 
-func New(s gosnmp.SnmpPDU) *Var {
+func NewVar(s gosnmp.SnmpPDU) *Var {
 	return &Var{s}
 }
 

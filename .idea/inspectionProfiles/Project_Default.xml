@@ -15,6 +15,7 @@
         <method importPath="math/rand" receiver="*Rand" name="Read" />
         <method importPath="github.com/gogf/gf/net/gudp" receiver="*Conn" name="Close" />
         <method importPath="net" receiver="Conn" name="Close" />
+        <method importPath="github.com/gogorepos/skeleton/proto/snmp" receiver="*SNMP" name="Close" />
       </methods>
     </inspection_tool>
   </profile>

@@ -35,6 +35,23 @@ func NewMulticastConn(address string) (*net.UDPConn, error) {
 	return conn, nil
 }
 
+// NewMulticastConnByIfiName 根据 <address> 创建并返回一个组播连接 *net.UDPConn
+func NewMulticastConnByIfiName(address, name string) (*net.UDPConn, error) {
+	addr, err := net.ResolveUDPAddr("udp", address)
+	if err != nil {
+		return nil, err
+	}
+	ifi, err := findIfiByName(name)
+	if err != nil {
+		return nil, err
+	}
+	conn, err := net.ListenMulticastUDP("udp", ifi, addr)
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
 // Send 向组播地址 <address> 发送信息
 func Send(address string, data []byte, retry ...gudp.Retry) error {
 	conn, err := NewConn(address)
@@ -91,6 +108,23 @@ func findIfiForever(host string) *net.Interface {
 	}
 }
 
+// findIfiByName 通过 <name> 获取网卡
+func findIfiByName(name string) (*net.Interface, error) {
+	var (
+		ifis []net.Interface
+		err  error
+	)
+	if ifis, err = net.Interfaces(); err != nil {
+		return nil, err
+	}
+	for _, ifi := range ifis {
+		if strings.Compare(ifi.Name, name) == 0 {
+			return &ifi, nil
+		}
+	}
+	return nil, gerror.New(fmt.Sprintf("not found ifi for %s", name))
+}
+
 // findIfi 查找对应组播地址 <host> 网卡。
 func findIfi(host string) (*net.Interface, error) {
 	var (
@@ -98,12 +132,10 @@ func findIfi(host string) (*net.Interface, error) {
 		addrs []net.Addr
 		err   error
 	)
-
 	// 获取设备的所有网络接口
 	if ifis, err = net.Interfaces(); err != nil {
 		return nil, err
 	}
-
 	for _, ifi := range ifis {
 		// 检查接口是否有组播地址
 		if addrs, err = ifi.MulticastAddrs(); err != nil {
@@ -119,6 +151,5 @@ func findIfi(host string) (*net.Interface, error) {
 			}
 		}
 	}
-
 	return nil, gerror.New(fmt.Sprintf("not found ifi to %s", host))
 }

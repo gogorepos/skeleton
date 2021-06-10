@@ -2,6 +2,7 @@ package iswitch
 
 import (
 	"log"
+	"net"
 	"strconv"
 	"sync"
 	"time"
@@ -16,6 +17,10 @@ func Run(ips ...string) (map[string][]IfUnit, error) {
 		c            = make(chan string, len(ips)+1)
 		wg           sync.WaitGroup
 	)
+	// 如果不指定 IP 地址，则从 169.254.0.1 到 169.254.0.254 中能连接的服务
+	if len(ips) == 0 {
+		ips = Ping("169.254.0.1", "169.254.0.254")
+	}
 	go func() {
 		for {
 			select {
@@ -138,4 +143,57 @@ func Fetch(ip string, c chan<- string) ([]IfUnit, error) {
 		}
 	}
 	return ifUnitSlice, nil
+}
+
+// Ping 获取 <start> 到 <end> IP 网段能够连接 snmp 服务器的 IP 地址
+func Ping(start, end string) []string {
+	startIP := net.ParseIP(start).To4()
+	endIP := net.ParseIP(end).To4()
+	// 如果其中有一个不能转换为 IPv4
+	if startIP == nil || endIP == nil {
+		return nil
+	}
+	var (
+		ips  []string                               // 保存结果
+		ip   = make(chan string)                    // IP 地址传递
+		flag = make(chan bool)                      // 结束信号传递
+		t    = time.NewTicker(time.Millisecond * 5) // 请求限速
+	)
+	go func() {
+		for ; startIP[2] <= endIP[2]; startIP[2]++ {
+			sIP := net.ParseIP(startIP.String()).To4()
+			for ; sIP[3] <= endIP[3]; sIP[3]++ {
+				<-t.C
+				go func() {
+					// 好像随便一个地址都可以连接，不会报错
+					// 所以只能连接后请请求数据，如果正确回应则表示连接成功
+					i := sIP.String()
+					if s, err := snmp.NewSNMP(i); err == nil {
+						if _, err = s.Get(OccupiedPortOid); err == nil {
+							ip <- i
+						}
+						s.Close()
+					}
+				}()
+				// net.IP 实际是 uint8，所以当 255 + 1 时，会得到 0
+				// 只能手动判断如果是 255，那么跳到下一个网段
+				if sIP[3] == 255 {
+					break
+				}
+				// 当开始后结束 IP 地址相同的时候，表示扫描完毕
+				// 给结束信道发送信号，返回结果
+				if sIP.Equal(endIP) {
+					flag <- true
+				}
+			}
+		}
+	}()
+	for {
+		select {
+		case i := <-ip:
+			ips = append(ips, i)
+		case <-flag:
+			return ips
+		}
+	}
 }

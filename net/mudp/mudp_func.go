@@ -9,7 +9,6 @@ import (
 
 	"github.com/gogf/gf/encoding/gjson"
 	"github.com/gogf/gf/errors/gerror"
-	"github.com/gogf/gf/net/gudp"
 )
 
 // NewMulticastConn 根据 <address> 创建并返回一个组播连接 *net.UDPConn
@@ -53,13 +52,13 @@ func NewMulticastConnByIfiName(address, name string) (*net.UDPConn, error) {
 }
 
 // Send 向组播地址 <address> 发送信息
-func Send(address string, data []byte, retry ...gudp.Retry) error {
+func Send(address string, data []byte) error {
 	conn, err := NewConn(address)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-	return conn.Send(data, retry...)
+	return conn.Send(data)
 }
 
 // SendString 向组播地址 <address> 发送字符串信息
